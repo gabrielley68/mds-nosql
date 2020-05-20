@@ -15,22 +15,48 @@ import com.mongodb.client.MongoDatabase;
 
 public class App {
 	static Scanner scanner = new Scanner(System.in);
-
-	public static void main(String[] args) {
-		if(args.length != 3) {
-			System.out.println("Pour se connecter à la base de données, veuillez donner les arguments : host port database");
-			System.exit(1);
-		}
-		String host = args[0];
-		int port = Integer.parseInt(args[1]);
-		String db = args[2];
-		
-		MongoClient mongoClient = MongoClients.create(
+	
+	private static MongoClient getMongoClient(final String host, final int port) {
+		return MongoClients.create(
 			MongoClientSettings.builder()
-				.applyToClusterSettings(builder -> 
-						builder.hosts(Arrays.asList(new ServerAddress(host, port))))
-				.build()
+			.applyToClusterSettings(builder -> 
+					builder.hosts(Arrays.asList(new ServerAddress(host, port))))
+			.build()
 		);
+	}
+
+	public static void main(String[] args) throws Exception {
+		String db = "Tps";
+		String host = "127.0.0.1";
+		int port = 27017;
+		for (int i = 0; i < args.length; i++) {
+			if(args[i].equals("--db")) {
+				if(i + 1 < args.length && !args[i + 1].startsWith("--")) {
+					db = args[i + 1];
+				}
+				else {
+					throw new Exception("--db not defined");
+				}
+			}
+			else if(args[i].equals("--host")) {
+				if(i + 1 < args.length && !args[i + 1].startsWith("--")) {
+					host = args[i + 1];
+				}
+				else {
+					throw new Exception("--host not defined");
+				}
+			}
+			else if (args[i].equals("--port")) {
+				if(i + 1 < args.length && !args[i + 1].startsWith("--")) {
+					port = Integer.parseInt(args[i + 1]);
+				}
+				else {
+					throw new Exception("--port not defined");
+				}
+			}
+		}
+		
+		MongoClient mongoClient = getMongoClient(host, port);
 		
 		MongoDatabase database = mongoClient.getDatabase(db);
 		
@@ -47,7 +73,7 @@ public class App {
 				MongoCollection<Document> collection = database.getCollection(scanner.next());
 				
 				if(res == 1) {
-					
+					search(collection);
 				}
 				
 			}
@@ -70,7 +96,14 @@ public class App {
 			System.out.println(document.toJson());
 		}
 		
+		System.out.println("Que souhaitez-vous faire ?");
+		System.out.println(" * 1 : Supprimer tous les documents filtrés");
+		System.out.println(" * 2 : Supprimer un des document");
+		System.out.println(" * 3 : Modifier tous les documents filtrés");
+		System.out.println(" * 4 : Modifier un des document");
+		
 	}
+	
 	
 	private static void insert(MongoCollection<Document> collection) {
 		
