@@ -1,6 +1,8 @@
 package MDS.NoSQL;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.Scanner;
 
 import org.bson.Document;
@@ -12,18 +14,10 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.MongoIterable;
 
 public class App {
-	static Scanner scanner = new Scanner(System.in);
-	
-	private static MongoClient getMongoClient(final String host, final int port) {
-		return MongoClients.create(
-			MongoClientSettings.builder()
-			.applyToClusterSettings(builder -> 
-					builder.hosts(Arrays.asList(new ServerAddress(host, port))))
-			.build()
-		);
-	}
+	private static Scanner scanner = ScannerHelper.getScanner();
 
 	public static void main(String[] args) throws Exception {
 		String db = "Tps";
@@ -56,56 +50,16 @@ public class App {
 			}
 		}
 		
-		MongoClient mongoClient = getMongoClient(host, port);
+		MongoClient mongoClient = MongoManipulator.getMongoClient(host, port);
 		
 		MongoDatabase database = mongoClient.getDatabase(db);
 		
-		
-		while(true) {
-			System.out.println("Pour rechercher un document tapez 1, pour en insérer un tapez 2");
-			int res = scanner.nextInt();
-			if(res == 1 || res == 2) {
-				System.out.println("Liste des collections");
-				for(String collectionName : database.listCollectionNames()) {
-					System.out.println("  - " + collectionName);
-				}
-				System.out.println("Quelle collection manipuler ?");
-				MongoCollection<Document> collection = database.getCollection(scanner.next());
-				
-				if(res == 1) {
-					search(collection);
-				}
-				
-			}
-		}
-	}
-	
-	private static void search(MongoCollection<Document> collection) {
-		System.out.println("Sélectionner le champ à filtrer");
-		String field = scanner.next();
-		System.out.println("Sélectionner un opérateur de comparaison (ex: $lte, $eq, ...");
-		String operator = scanner.next();
-		System.out.println("Sélectionner la valeur du filtre");
-		String value = scanner.next();
-		
-		FindIterable<Document> filtered_collection = collection.find(
-			new Document(field, new Document(operator, value))
-		);
-		
-		for(Document document : filtered_collection) {
-			System.out.println(document.toJson());
-		}
-		
-		System.out.println("Que souhaitez-vous faire ?");
-		System.out.println(" * 1 : Supprimer tous les documents filtrés");
-		System.out.println(" * 2 : Supprimer un des document");
-		System.out.println(" * 3 : Modifier tous les documents filtrés");
-		System.out.println(" * 4 : Modifier un des document");
-		
+		UserInteraction ui = new UserInteraction(database);
+		ui.run();
 	}
 	
 	
-	private static void insert(MongoCollection<Document> collection) {
+	private static void insert(MongoManipulator manipulator) {
 		
 	}
 }
