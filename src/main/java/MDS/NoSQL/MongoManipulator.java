@@ -2,6 +2,8 @@ package MDS.NoSQL;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Scanner;
 
 import org.bson.Document;
@@ -19,15 +21,16 @@ import static com.mongodb.client.model.Updates.*;
 
 public class MongoManipulator {
 	private MongoCollection<Document> collection;
-	private ArrayList<String> fields;
+	private Map<String, String> fields;
 	
 	public MongoManipulator(MongoCollection<Document> collection) {
 		this.collection = collection;
-		fields = new ArrayList<String>();
+		fields = new HashMap<String, String>();
 		for(Document doc : collection.find()) {
 			for(String key : doc.keySet()) {
-				if(!fields.contains(key)) {
-					fields.add(key);
+				if(!fields.containsKey(key)) {
+					String type = doc.get(key) == null ? "null" : doc.get(key).getClass().getName();
+					fields.put(key, type);
 				}
 			}
 		}
@@ -43,10 +46,23 @@ public class MongoManipulator {
 	} 
 	
 	public FindIterable<Document> filter(String field, String operator, String value) {
-		return collection.find(
-			new Document(field, new Document(operator, value))
-		);
+		Class<?> type;
+		try {
+			type = Class.forName(fields.get(field));
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+			type = String.class;
+		}
+		Document filter;
+		if (type == Integer.class) {
+			filter = new Document(operator, Integer.parseInt(value));
+		} else {
+			filter = new Document(operator, value);
+		}
 		
+		return collection.find(
+			new Document(field, filter)
+		);
 	}
 
 	public void deleteAll(FindIterable<Document> documents) {
@@ -71,7 +87,7 @@ public class MongoManipulator {
 	
 	public void displayFields() {
 		System.out.println("Les champs suivants sont dans la collection");
-		for(String field : fields) {
+		for(String field : fields.keySet()) {
 			System.out.println(field);
 		}
 	}
