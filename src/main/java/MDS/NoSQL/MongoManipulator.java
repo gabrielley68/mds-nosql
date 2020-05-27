@@ -43,22 +43,25 @@ public class MongoManipulator {
 					builder.hosts(Arrays.asList(new ServerAddress(host, port))))
 			.build()
 		);
-	} 
+	}
 	
-	public FindIterable<Document> filter(String field, String operator, String value) {
+	public Object getValue(String field, String value) {
 		Class<?> type;
 		try {
 			type = Class.forName(fields.get(field));
-		} catch (ClassNotFoundException e) {
+		} catch(ClassNotFoundException e) {
 			e.printStackTrace();
 			type = String.class;
 		}
-		Document filter;
-		if (type == Integer.class) {
-			filter = new Document(operator, Integer.parseInt(value));
+		if(type == Integer.class) {
+			return Integer.parseInt(value);
 		} else {
-			filter = new Document(operator, value);
+			return value;
 		}
+	}
+	
+	public FindIterable<Document> filter(String field, String operator, String value) {
+		Document filter = new Document(operator, this.getValue(field, value));
 		
 		return collection.find(
 			new Document(field, filter)
@@ -69,19 +72,19 @@ public class MongoManipulator {
 		documents.forEach((doc) -> collection.deleteOne(eq("_id", doc.get("_id")))) ;
 	}
 
-	public void deleteOne(String id) {
-		collection.deleteOne(eq("_id", id));	
+	public void deleteOne(Document doc) {
+		collection.deleteOne(eq("_id", doc.get("_id")));	
 	}
 
 	public void modifyAll(FindIterable<Document> documents, String field, String value) {
 		documents.forEach((doc) -> collection.updateOne(
-			eq("_id", doc.get("id")), set(field, value))
+			eq("_id", doc.get("_id")), set(field, this.getValue(field, value)))
 		);
 	}
 
-	public void modifyOne(String id, String field, String value) {
+	public void modifyOne(Document doc, String field, String value) {
 		collection.updateOne(
-			eq("_id", id), set(field, value)
+			eq("_id", doc.get("_id")), set(field, this.getValue(field, value))
 		);
 	}
 	
@@ -90,5 +93,24 @@ public class MongoManipulator {
 		for(String field : fields.keySet()) {
 			System.out.println(field);
 		}
+	}
+
+	public ArrayList<Document> displayAndConvertDocuments(FindIterable<Document> filtered_collection) {
+		ArrayList<Document> list = new ArrayList<>();
+		
+		for(Document doc : filtered_collection) {
+			list.add(doc);
+			System.out.println("" + list.size() + " - " + doc.toJson());
+		}
+		
+		return list;
+	}
+	
+	public void addDocument(Document doc) {
+		collection.insertOne(doc);
+	}
+	
+	public Map<String, String> getFields(){
+		return fields;
 	}
 }

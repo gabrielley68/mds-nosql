@@ -7,6 +7,7 @@ import java.util.InputMismatchException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Scanner;
+import java.util.function.Consumer;
 
 public class ScannerHelper {
 	private ScannerHelper() {};
@@ -47,5 +48,21 @@ public class ScannerHelper {
 		} while (!choices.contains(result));
 		
 		return result;
+	}
+	
+	public static int getIndexChoice(int list_size) {
+		int result = -1;
+		
+		do {
+			System.out.println("Choisissez le numéro d'un des éléments ci-dessus");
+			result = getScanner().nextInt(); 
+		} while (result < 0 || result > list_size);
+		
+		return result - 1;
+	}
+	
+	public static String getValue(String label) {
+		System.out.print(label + " : ");
+		return getScanner().nextLine();
 	}
 }

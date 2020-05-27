@@ -1,6 +1,7 @@
 package MDS.NoSQL;
 
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.Scanner;
 
 import org.bson.Document;
@@ -52,22 +53,20 @@ public class UserInteraction {
 		
 		FindIterable<Document> filtered_collection = manipulator.filter(field, operator, value);
 		
-		for(Document document : filtered_collection) {
-			System.out.println(document.toJson());
-		}
+		ArrayList<Document> list = manipulator.displayAndConvertDocuments(filtered_collection);
 		
 		Integer res = ScannerHelper.getAction(new String[] {
 			"Supprimer tous les documents filtrés", "Supprimer un des document",
 			"Modifier tous les documents filtrés", "Modifier un des document"
 		});
-
+		int index;
 		switch(res) {
 			case 0:
 				manipulator.deleteAll(filtered_collection);
 				break;
 			case 1:
-				System.out.println("Entrez l'identifiant du document à supprimer");
-				manipulator.deleteOne(scanner.next());
+				index = ScannerHelper.getIndexChoice(list.size());
+				manipulator.deleteOne(list.get(index));
 				break;
 			case 2:
 				System.out.println("Entrez le champ à modifier");
@@ -77,21 +76,30 @@ public class UserInteraction {
 				manipulator.modifyAll(filtered_collection, field, value);
 				break;
 			case 3:
-				System.out.println("Entrez l'identifiant du document à supprimer");
-				String id = scanner.next();
+				index = ScannerHelper.getIndexChoice(list.size());
 				System.out.println("Entrez le champ à modifier");
 				field = scanner.next();
 				System.out.println("Entrez la valeur à insérer");
 				value = scanner.next();
-				manipulator.modifyOne(id, field, value);
+				manipulator.modifyOne(list.get(index), field, value);
 				break;
 		}
 	}
 	
 	
 	private void insert() {
+		Document doc = new Document();
+		System.out.println("Entrez les champs (indiquez 'null' pour ignorer le champ) :");
+		for(Map.Entry<String, String> field : manipulator.getFields().entrySet()) {
+			if(!field.getKey().equals("_id")) {
+				String response = ScannerHelper.getValue(field.getKey());
+				if(!response.equals("null")) {
+					doc = doc.append(field.getKey(), manipulator.getValue(field.getKey(), response));
+				}
+			}
+		}
 		
+		manipulator.addDocument(doc);
 	}
-	
 	
 }
