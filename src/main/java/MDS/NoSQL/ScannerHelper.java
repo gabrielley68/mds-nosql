@@ -32,7 +32,7 @@ public class ScannerHelper {
 			} catch (InputMismatchException e ) {
 				System.err.println(e.getMessage());
 			}
-		} while(result > 0 && result < choices.length);
+		} while(result < 0 || result > choices.length);
 		
 		return result;
 	}

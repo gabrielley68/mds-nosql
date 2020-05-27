@@ -75,6 +75,7 @@ public class UserInteraction {
 				System.out.println("Entrez la valeur à insérer");
 				value = scanner.next();
 				manipulator.modifyAll(filtered_collection, field, value);
+				break;
 			case 3:
 				System.out.println("Entrez l'identifiant du document à supprimer");
 				String id = scanner.next();
